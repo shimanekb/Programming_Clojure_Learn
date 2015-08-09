@@ -36,3 +36,38 @@
 
 ;holds teh head (avoid!)
 (def head-fibo (lazy-cat [0N 1N] (map + head-fibo (rest head-fibo))))
+
+(defn count-heads-pairs [coll]
+  (loop [cnt 0 coll coll]
+    (if (empty? coll)
+      cnt
+      (recur (if (= :h (first coll) (second coll))
+               (inc cnt)
+               cnt)
+             (rest coll)))))
+
+;overly complex, better approaches follow ...
+(defn by-pairs [coll]
+  (let [take-pair (fn [c]
+                    (when (next c) (take 2 c)))]
+    (lazy-seq
+      (when-let [pair (seq (take-pair coll))]
+        (cons pair (by-pairs (rest coll)))))))
+
+(defn count-heads-pairs2 [coll]
+  (count (filter (fn [pair] (every? #(= :h %) pair))
+                 (by-pairs coll))))
+
+(def ^{:doc "Count items matching a filter"}
+  count-if (comp count filter))
+
+(defn count-runs
+  "Count runs of length n where pred is true in coll."
+  [n pred coll]
+  (count-if #(every? pred %) (partition n 1 coll)))
+
+(def ^{:doc "Count runs of length two that are both head"}
+  count-heads-pairs (partial count-runs 2 #(= % :h)))
+
+;almost a curry
+(defn faux-curry [& args] (apply partial partial args))
